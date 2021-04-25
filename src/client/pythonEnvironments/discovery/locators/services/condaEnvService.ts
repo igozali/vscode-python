@@ -7,6 +7,13 @@ import { traceError } from '../../../../common/logger';
 import { IFileSystem } from '../../../../common/platform/types';
 import { ICondaLocatorService, IInterpreterHelper } from '../../../../interpreter/contracts';
 import { IServiceContainer } from '../../../../ioc/types';
+import {
+    // getFileInfo,
+    getPythonSetting,
+    // onDidChangePythonSetting,
+    // pathExists,
+    // untildify,
+} from '../../../common/externalDependencies';
 import { PythonEnvironment } from '../../../info';
 import { CacheableLocatorService } from './cacheableLocatorService';
 import { parseCondaInfo } from './conda';
@@ -53,11 +60,15 @@ export class CondaEnvService extends CacheableLocatorService {
             if (!info) {
                 return [];
             }
+
+            const maxNumberOfLatestEnvs = getPythonSetting<number>("condaMaxNumberOfLatestEnvs");
             const interpreters = await parseCondaInfo(
                 info,
                 (env) => this.condaService.getInterpreterPath(env),
                 (f) => this.fileSystem.fileExists(f),
+                f => this.fileSystem.stat(f),
                 (p) => this.helper.getInterpreterInformation(p),
+                maxNumberOfLatestEnvs,
             );
             this._hasInterpreters.resolve(interpreters.length > 0);
             const environments = await this.condaService.getCondaEnvironments(true);

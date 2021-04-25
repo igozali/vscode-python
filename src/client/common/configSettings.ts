@@ -108,6 +108,8 @@ export class PythonSettings implements IPythonSettings {
 
     public condaPath = '';
 
+    public condaMaxNumberOfLatestEnvs = 0;
+
     public pipenvPath = '';
 
     public poetryPath = '';
