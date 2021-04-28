@@ -54,7 +54,7 @@ suite('Interpreters from Conda Environments', () => {
         ioc.registerProcessTypes();
     }
     function _parseCondaInfo(info: CondaInfo, conda: ICondaLocatorService, fs: IFileSystem, h: IInterpreterHelper) {
-        return parseCondaInfo(info, conda.getInterpreterPath, fs.fileExists, h.getInterpreterInformation);
+        return parseCondaInfo(info, conda.getInterpreterPath, fs.fileExists, fs.stat, h.getInterpreterInformation, 0);
     }
 
     test('Must return an empty list for empty json', async () => {

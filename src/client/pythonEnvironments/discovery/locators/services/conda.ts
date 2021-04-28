@@ -1,5 +1,6 @@
 import * as fsapi from 'fs-extra';
 import * as path from 'path';
+import { zip } from 'lodash';
 import { traceVerbose } from '../../../../common/logger';
 import { getEnvironmentVariable, getOSType, getUserHomeDir, OSType } from '../../../../common/utils/platform';
 import { exec, pathExists, readFile } from '../../../common/externalDependencies';
@@ -11,6 +12,7 @@ import { getRegistryInterpreters } from '../../../common/windowsUtils';
 import { EnvironmentType, PythonEnvironment } from '../../../info';
 import { IDisposable } from '../../../../common/types';
 import { cache } from '../../../../common/utils/decorators';
+import { FileStat } from '../../../../common/platform/types';
 
 export const AnacondaCompanyNames = ['Anaconda, Inc.', 'Continuum Analytics, Inc.'];
 
@@ -51,7 +53,9 @@ export async function parseCondaInfo(
     info: CondaInfo,
     getPythonPath: (condaEnv: string) => string,
     fileExists: (filename: string) => Promise<boolean>,
+    stat: (filename: string) => Promise<FileStat>,
     getPythonInfo: (python: string) => Promise<Partial<PythonEnvironment> | undefined>,
+    maxNumberOfLatestEnvs?: number,
 ) {
     // The root of the conda environment is itself a Python interpreter
     // envs reported as e.g.: /Users/bob/miniconda3/envs/someEnv.
@@ -60,7 +64,19 @@ export async function parseCondaInfo(
         envs.push(info.default_prefix);
     }
 
-    const promises = envs.map(async (envPath) => {
+    let envsToSearch: string[] = [];
+    if (maxNumberOfLatestEnvs !== 0) {
+        const envMtimes = await Promise.all(envs.map(envPath => stat(envPath).then(s => s.mtime)));
+        const envsSortedByMtime = zip(envs, envMtimes)
+            .sort((a, b) => -(a[1]! - b[1]!)) // sort by descending mtime
+            .map(([a, _]) => a!);
+
+        envsToSearch = envsSortedByMtime.slice(0, maxNumberOfLatestEnvs);
+    } else {
+        envsToSearch = envs;
+    }
+
+    const promises = envsToSearch.map(async (envPath) => {
         const pythonPath = getPythonPath(envPath);
 
         if (!(await fileExists(pythonPath))) {
@@ -82,7 +98,6 @@ export async function parseCondaInfo(
 
     return Promise.all(promises)
         .then((interpreters) => interpreters.filter((interpreter) => interpreter !== null && interpreter !== undefined))
-
         .then((interpreters) => interpreters.map((interpreter) => interpreter!));
 }
 

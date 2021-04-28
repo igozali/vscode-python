@@ -1648,6 +1648,12 @@
                     "description": "Path to the conda executable to use for activation (version 4.4+).",
                     "scope": "resource"
                 },
+                "python.condaMaxNumberOfLatestEnvs": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "Maximum number of most recent conda envs on which to find Python interpreters. Useful in scenarios where there are too many conda environments. 0 means unlimited.",
+                    "scope": "resource"
+                },
                 "python.pipenvPath": {
                     "type": "string",
                     "default": "pipenv",

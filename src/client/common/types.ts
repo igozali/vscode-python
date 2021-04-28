@@ -177,6 +177,7 @@ export interface IPythonSettings {
     readonly venvPath: string;
     readonly venvFolders: string[];
     readonly condaPath: string;
+    readonly condaMaxNumberOfLatestEnvs: number;
     readonly pipenvPath: string;
     readonly poetryPath: string;
     readonly insidersChannel: ExtensionChannels;
